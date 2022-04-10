@@ -14,7 +14,7 @@ void colocarBarcosManualmente();
 // barco, nBarcos, matriz_pos_jugador, N, M)
 void colocarBarcosAutomaticamente(struct barcos *info, int numero_barcos, int *i_matriz_pos_jugador);
 void inicializarTablero(int *tablero, int filas, int columnas);
-void imprimirTablero();
+void imprimirTablero(int *i_matriz_pos); // i_matriz_pos_jugador o i_matriz_pos_maquina
 void comprobacionEspacioParaBarco();
 void compruebaGanador();
 void compruebaDisparo();
@@ -379,6 +379,8 @@ void inicializarTablero(int *tablero, int filas, int columnas)
 void colocarBarcosAutomaticamente(struct barcos *info, int numero_barcos, int *i_matriz_pos_jugador)
 {
     int fila, columna, orientacion;
+    // Realiza un bucle con el número de barcos que se han introducido.
+    // En vez de goto se puede usar una función auxiliar que se repita las mismas veces.
     for (int k=0; k<numero_barcos; k++)
     {
     START_BUCLE:
@@ -386,10 +388,18 @@ void colocarBarcosAutomaticamente(struct barcos *info, int numero_barcos, int *i
     columna = rand() % M;
     orientacion = rand() % 2; // 0 = horizontal, 1 = vertical
     printf("%d %d %d\n", fila, columna, orientacion);
-    if (orientacion == 0)
+    if (orientacion == 0) // Si la orientación es horizontal
     {
-        if (columna + info[k].tamanio <= M)
+        if (columna + info[k].tamanio <= M) // Comprueba que el barco no se sale del tablero.
         {
+            // Comprueba que no haya otro barco en la posición
+            for (int i = 0; i < info[k].tamanio; i++)
+            {
+                if (i_matriz_pos_jugador[fila * M + columna + i] != 0)
+                {
+                    goto START_BUCLE;
+                }
+            }
             for (int i = 0; i < info[k].tamanio; i++)
             {
                 i_matriz_pos_jugador[fila * M + columna + i] = info[k].tamanio;
@@ -401,10 +411,18 @@ void colocarBarcosAutomaticamente(struct barcos *info, int numero_barcos, int *i
             goto START_BUCLE;
         }
     }
-    else
+    else // Si la orientación es vertical.
     {
-        if (fila + info[k].tamanio <= N)
+        if (fila + info[k].tamanio <= N) // Comprueba que el barco no se sale del tablero
         {
+            // Comprueba que no haya otro barco en la posición
+            for (int i = 0; i < info[k].tamanio; i++)
+            {
+                if (i_matriz_pos_jugador[(fila + i) * M + columna] != 0)
+                {
+                    goto START_BUCLE;
+                }
+            }
             for (int i = 0; i < info[k].tamanio; i++)
             {
                 i_matriz_pos_jugador[(fila + i) * M + columna] = info[k].tamanio;
@@ -417,14 +435,28 @@ void colocarBarcosAutomaticamente(struct barcos *info, int numero_barcos, int *i
         }
     }
     // imprimir el tablero
-    for (int i = 0; i < N; i++)
+    /*for (int i = 0; i < N; i++)
     {
         for (int j = 0; j < M; j++)
         {
             printf("%d ", i_matriz_pos_jugador[i * M + j]);
         }
         printf("\n");
-    }
+    }*/
+    imprimirTablero(i_matriz_pos_jugador);
     getchar();
+    }
+}
+
+// Imprime cualquier tablero que se le pase como parámetro
+void imprimirTablero(int *i_matriz_pos)
+{
+    for (int i = 0; i < N; i++)
+    {
+        for (int j = 0; j < M; j++)
+        {
+            printf("%d ", i_matriz_pos[i * M + j]);
+        }
+        printf("\n");
     }
 }
