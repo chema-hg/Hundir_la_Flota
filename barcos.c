@@ -44,6 +44,9 @@ int *matriz_pos_computadora = NULL;      // matriz de posiciones de la computado
 int *matriz_disparos_jugador = NULL;     // marcador de disparos del jugador
 int *matriz_disparos_computadora = NULL; // marcador de disparos de la computadora
 
+// Marcador para controlar que antes de jugar se haya configurado el tablero de los barcos
+int marcador = 0; // 0 = no configurado, 1 = configurado
+
 int main()
 {
     // hundir la flota escrito en c
@@ -89,12 +92,30 @@ int main()
                 break;
 
             case 2:
-                // LLama al submenu jugar ordenador versus jugador.
-                menu_jugar_ovuj();
+                // comprueba que se haya configurado antes el tablero.
+                if (marcador == 0)
+                {
+                    printf("\nERROR: PRIMERO DEBE CONFIGURAR EL TABLERO DE LOS BARCOS\n");
+                    printf("Pulse Intro para continuar...\n");
+                    getchar();
+                }
+                else
+                {
+                    // LLama al submenu jugar ordenador versus jugador.
+                    menu_jugar_ovuj();
+                }
                 break;
 
             case 3:
                 // LLama al submenu jugar ordenador versus ordenador.
+                // comprueba que se haya configurado antes el tablero.
+                if (marcador == 0)
+                {
+                    printf("\nERROR: PRIMERO DEBE CONFIGURAR EL TABLERO DE LOS BARCOS\n");
+                    printf("Pulse Intro para continuar...\n");
+                    getchar(); 
+                    break;
+                }
                 // inicializamos las matrices
                 colocarBarcos();
                 // Colocamos los barcos del jugador en el tablero
@@ -155,6 +176,7 @@ get_input: // Etiqueta para poder usar luego goto.
             printf("Pulse Intro para continuar...\n");
             getchar();
             leer_Archivo(barco);
+            marcador = 1;
             break;
         case 2:
             printf("\nCONFIGURACION DEL TABLERO\n");
@@ -204,6 +226,7 @@ get_input: // Etiqueta para poder usar luego goto.
             {
                 nBarcos = opcion;
                 inicializarBarcos(barco, nBarcos);
+                marcador =1;
                 break;
             }
 
@@ -390,7 +413,7 @@ void inicializarTablero(int *tablero, int filas, int columnas)
 
 // Colocar Barcos Automáticamente
 /* A esta función se le pasará una matriz de barcos y su tamaño y la configuración de bar-
-cos y colocará los barcos especificados en la configuración automáticamente mediante 
+cos y colocará los barcos especificados en la configuración automáticamente mediante
 la generación de números aleatorios */
 void colocarBarcosAutomaticamente(struct barcos *info, int numero_barcos, int *i_matriz_pos_jugador)
 {
@@ -466,7 +489,7 @@ void imprimirTablero(int *i_matriz_pos)
 /* A esta función se le pasará una matriz de barcos, una posición inicial (fila y columna),
 un tamaño de barco y una orientación (vertical u horizontal).
 Comprobará si es posible almacenar un barco del tamaño especificado en el tablero que se le pasa como parámetro toman-
-do como posición inicial y orientación la especificada por los argumentos. 
+do como posición inicial y orientación la especificada por los argumentos.
 Devolverá información sobre si es posible o no. */
 int comprobacionEspacioParaBarco(int *i_matriz_espacio, int ifila, int icolumna, int iorientacion, int tamanio_barco)
 {
@@ -510,7 +533,7 @@ int comprobacionEspacioParaBarco(int *i_matriz_espacio, int ifila, int icolumna,
     }
 }
 // Juego manual Computador vs Jugador.
-/* Esta función realizará las operaciones necesarias para que el usuario adivine dónde tiene 
+/* Esta función realizará las operaciones necesarias para que el usuario adivine dónde tiene
 los barcos el ordenador. */
 void juegoManual(int *matriz_pos_jugador, int *matriz_pos_computadora, int *matriz_disparos_jugador, int *matriz_disparos_computadora)
 {
