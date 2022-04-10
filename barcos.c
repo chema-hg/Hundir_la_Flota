@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h> // Para usar o rand() por ejemplo.
 #include <string.h>
+#include <time.h> // Para usar la funcion time()
 
 // Estructura de datos
 struct barcos
@@ -10,7 +11,8 @@ struct barcos
 
 // declaracion de funciones obligatorias
 void colocarBarcosManualmente();
-void colocarBarcosAutomaticamente();
+// barco, nBarcos, matriz_pos_jugador, N, M)
+void colocarBarcosAutomaticamente(struct barcos *info, int numero_barcos, int *i_matriz_pos_jugador);
 void inicializarTablero(int *tablero, int filas, int columnas);
 void imprimirTablero();
 void comprobacionEspacioParaBarco();
@@ -33,9 +35,9 @@ int M = 0;               // nº de columnas
 int nBarcos = 0;         // nº de barcos
 struct barcos barco[10]; // establecemos un máximo de 10 barcos
 // declaracion como punteros de las 4 matrices de posiciones y disparos
-int *matriz_pos_jugador = NULL; //matriz de posiciones del jugador
-int *matriz_pos_computadora = NULL; //matriz de posiciones de la computadora
-int *matriz_disparos_jugador = NULL; // marcador de disparos del jugador
+int *matriz_pos_jugador = NULL;          // matriz de posiciones del jugador
+int *matriz_pos_computadora = NULL;      // matriz de posiciones de la computadora
+int *matriz_disparos_jugador = NULL;     // marcador de disparos del jugador
 int *matriz_disparos_computadora = NULL; // marcador de disparos de la computadora
 
 int main()
@@ -45,7 +47,10 @@ int main()
     // declaracion de variables
     int opcion = 0;
     char input[10];
-    
+
+    // Inicializar los números aleatorios.
+    srand(time(NULL));
+
     // llamar al menu de opciones
     while (opcion != 4)
     {
@@ -174,9 +179,9 @@ get_input: // Etiqueta para poder usar luego goto.
             }
         START_BARCOS:
             printf("Introduzca el número de barcos (máximo 10): \n");
-            fgets(input, 10, stdin); // Lee una cadena del teclado
-            opcion = atoi(input);    // Convertir el string a int
-            if (opcion <= 0 || opcion>10)         // Si la entrada no es un número o es negativo o mayor que 10.
+            fgets(input, 10, stdin);        // Lee una cadena del teclado
+            opcion = atoi(input);           // Convertir el string a int
+            if (opcion <= 0 || opcion > 10) // Si la entrada no es un número o es negativo o mayor que 10.
             {
                 printf("\nERROR: DEBE INTRODUCIR UN NUMERO POSITIVO VÁLIDO\n");
                 printf("Pulse Intro para continuar...\n");
@@ -226,22 +231,24 @@ START: // Etiqueta para poder usar luego goto.
     {
         switch (opcion)
         {
-            case 1:
-                // Inicializamos los 4 tableros y declaramos la memoria dinamica de los punteros.
-                matriz_pos_jugador = (int *)malloc(sizeof(int *) * N * M);
-                inicializarTablero(matriz_pos_jugador, N, M);
-                matriz_pos_computadora = (int *)malloc(sizeof(int *) * N * M);
-                inicializarTablero(matriz_pos_computadora, N, M);
-                matriz_disparos_jugador = (int *)malloc(sizeof(int *) * N * M);
-                inicializarTablero(matriz_disparos_jugador, N, M);
-                matriz_disparos_computadora = (int *)malloc(sizeof(int *) * N * M);
-                inicializarTablero(matriz_disparos_computadora, N, M);
-                break;
-            case 2:
-                break;
-            default:
-                printf("Salir\n");
-                break;
+        case 1:
+            // Inicializamos los 4 tableros y declaramos la memoria dinamica de los punteros.
+            matriz_pos_jugador = (int *)malloc(sizeof(int *) * N * M);
+            inicializarTablero(matriz_pos_jugador, N, M);
+            matriz_pos_computadora = (int *)malloc(sizeof(int *) * N * M);
+            inicializarTablero(matriz_pos_computadora, N, M);
+            matriz_disparos_jugador = (int *)malloc(sizeof(int *) * N * M);
+            inicializarTablero(matriz_disparos_jugador, N, M);
+            matriz_disparos_computadora = (int *)malloc(sizeof(int *) * N * M);
+            inicializarTablero(matriz_disparos_computadora, N, M);
+            // Colocamos los barcos en el tablero
+            colocarBarcosAutomaticamente(barco, nBarcos, matriz_pos_jugador);
+            break;
+        case 2:
+            break;
+        default:
+            printf("Salir\n");
+            break;
         }
     }
     /* Pendiente de completar y dejar funciones para cada opcion */
@@ -352,7 +359,8 @@ void leer_Archivo(struct barcos *datos)
 }
 
 // Función para inicializar el tablero
-void inicializarTablero(int *tablero, int filas, int columnas){
+void inicializarTablero(int *tablero, int filas, int columnas)
+{
     /* Inicializa el tablero con todos los valores a 0.
     El tablero es un array de enteros, por lo que se inicializa con 0.
     El tablero es de N filas por M columnas.
@@ -365,5 +373,58 @@ void inicializarTablero(int *tablero, int filas, int columnas){
             tablero[i * columnas + j] = 0;
         }
     }
+}
 
+// Colocar Barcos Automáticamente
+void colocarBarcosAutomaticamente(struct barcos *info, int numero_barcos, int *i_matriz_pos_jugador)
+{
+    int fila, columna, orientacion;
+    for (int k=0; k<numero_barcos; k++)
+    {
+    START_BUCLE:
+    fila = rand() % N;
+    columna = rand() % M;
+    orientacion = rand() % 2; // 0 = horizontal, 1 = vertical
+    printf("%d %d %d\n", fila, columna, orientacion);
+    if (orientacion == 0)
+    {
+        if (columna + info[k].tamanio <= M)
+        {
+            for (int i = 0; i < info[k].tamanio; i++)
+            {
+                i_matriz_pos_jugador[fila * M + columna + i] = info[k].tamanio;
+            }
+        }
+        else
+        {
+            //colocarBarcosAutomaticamente(info, numero_barcos, i_matriz_pos_jugador);
+            goto START_BUCLE;
+        }
+    }
+    else
+    {
+        if (fila + info[k].tamanio <= N)
+        {
+            for (int i = 0; i < info[k].tamanio; i++)
+            {
+                i_matriz_pos_jugador[(fila + i) * M + columna] = info[k].tamanio;
+            }
+        }
+        else
+        {
+            //colocarBarcosAutomaticamente(info, numero_barcos, i_matriz_pos_jugador);
+            goto START_BUCLE;
+        }
+    }
+    // imprimir el tablero
+    for (int i = 0; i < N; i++)
+    {
+        for (int j = 0; j < M; j++)
+        {
+            printf("%d ", i_matriz_pos_jugador[i * M + j]);
+        }
+        printf("\n");
+    }
+    getchar();
+    }
 }
