@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <stdlib.h> // Para usar o rand() por ejemplo.
+#include <stdlib.h> // Para usar rand() por ejemplo.
 #include <string.h>
 #include <time.h> // Para usar la funcion time()
 
@@ -433,7 +433,7 @@ void imprimirTablero(int *i_matriz_pos)
     printf("\n");
     for (int i = 0; i < N; i++)
     {
-        printf("%d   ", contador);  
+        printf("%d   ", contador);
         for (int j = 0; j < M; j++)
         {
             if (i_matriz_pos[i * M + j] < 0)
@@ -558,20 +558,46 @@ void juegoManual(int *matriz_pos_jugador, int *matriz_pos_computadora, int *matr
             }
             columna = opcion;
         } while (opcion == -1);
-
+        // Si el jugador vuelve a disparar a una zona que ya lo hizo (-1=Agua) o vuelve a disparar
+        // donde ya lo hizo y habia un barco(tocado es 1,2,3,4,...) reinicia la función.
+        if ((matriz_disparos_jugador[fila * M + columna] == -1) || (matriz_disparos_jugador[fila * M + columna] > 0))
+        {
+            printf("Ya has disparado en esa posición.");
+            getchar();
+            juegoManual(matriz_pos_jugador, matriz_pos_computadora, matriz_disparos_jugador, matriz_disparos_computadora);
+        }
         printf("JUGADOR:  ->  ");
         // getchar();
         // Comprueba si el disparo es correcto para el jugador.
         compruebaDisparo(matriz_pos_computadora, matriz_disparos_jugador, fila, columna);
-        compruebaGanador(matriz_pos_computadora); // Comprueba si el jugador ha ganado.
+        resultado = compruebaGanador(matriz_pos_computadora); // Comprueba si el jugador ha ganado.
+        if (resultado == 1)
+        {
+            printf("\aHAS GANADO !!!\n");
+            getchar();
+        }        
+        if (resultado!=1) // Si el jugador no ha ganado, pasa al siguiente turno.
+        {
+        TURNO_COMPUTADORA:
         // Turno de la computadora.
         fila = rand() % N;
         columna = rand() % M;
         // Comprueba si el disparo es correcto para la computadora.
+        // Si el computardor vuelve a disparar a una zona que ya lo hizo (-1=Agua) o vuelve a disparar
+        // donde ya lo hizo y habia un barco(tocado es 1,2,3,4,...) reinicia la función.
+        if ((matriz_disparos_computadora[fila * M + columna] == -1) || (matriz_disparos_computadora[fila * M + columna] > 0))
+        {
+            goto TURNO_COMPUTADORA;
+        }
         printf("\nCOMPUTADORA: F%d - C%d ->  ", fila, columna);
         compruebaDisparo(matriz_pos_jugador, matriz_disparos_computadora, fila, columna);
-        compruebaGanador(matriz_pos_jugador); // Comprueba si la computadora ha ganado.
+        resultado = compruebaGanador(matriz_pos_jugador); // Comprueba si la computadora ha ganado.
+        if (resultado == 1)
+        {
+            printf("\aHAS PERDIDO !!!\n");
+        }
         getchar();
+        }
     } while (resultado == 0);
 }
 
@@ -589,7 +615,7 @@ void compruebaDisparo(int *matriz_barcos, int *matriz_tiradas, int fila, int col
     }
     else
     {
-        printf("Tocado!!!");
+        printf("\aTocado!!!");
         num_pos = matriz_barcos[fila * M + columna];    // Número en esa posicion (tamaño del barco).
         matriz_tiradas[fila * M + columna] = num_pos;   // Indica que se ha tocado un barco en la matriz de tiradas y su tamaño.
         matriz_barcos[fila * M + columna] = -(num_pos); // Indica que se ha tocado un barco cambiando el signo de su tamaño.
@@ -609,9 +635,9 @@ int compruebaGanador(int *matriz_barcos)
         {
             if (matriz_barcos[i * M + j] > 0)
             {
-                return 0; // Si hay un barco que no está hundido, devuelve 0.
+                return 0; // Si hay un barco que no está hundido habra una posicion con 1,2.. y , devuelve 0.
             }
         }
     }
-    return 1; // Si todos los barcos están hundidos, devuelve 1.
+    return 1; // Si todos los barcos están hundidos(matriz barcos todos los valores menores a 0), devuelve 1.
 }
