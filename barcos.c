@@ -17,8 +17,8 @@ void inicializarTablero(int *tablero, int filas, int columnas);
 void imprimirTablero(int *i_matriz_pos); // i_matriz_pos_jugador o i_matriz_pos_maquina
 int comprobacionEspacioParaBarco(int *i_matriz_espacio, int ifila, int icolumna, int iorientacion, int tamanio_barco);
 void compruebaGanador();
-void compruebaDisparo();
-void juegoManual();
+void compruebaDisparo(int *matriz_barcos, int *matriz_tiradas, int fila, int columna);
+void juegoManual(int *matriz_pos_jugador, int *matriz_pos_computadora, int *matriz_disparos_jugador, int *matriz_disparos_computadora);
 void juegoAutomatico();
 
 // declaración de funciones auxiliares
@@ -245,6 +245,8 @@ START: // Etiqueta para poder usar luego goto.
             colocarBarcosAutomaticamente(barco, nBarcos, matriz_pos_jugador);
             // Colocamos los barcos del ordenador en el tablero
             colocarBarcosAutomaticamente(barco, nBarcos, matriz_pos_computadora);
+            // Empezamos el juego de forma manual
+            juegoManual(matriz_pos_jugador, matriz_pos_computadora, matriz_disparos_jugador, matriz_disparos_computadora);
             break;
         case 2:
             break;
@@ -271,7 +273,7 @@ void inicializarBarcos(struct barcos *info, int tam)
         printf("Introduzca el tamaño del barco %d: \n", i + 1);
         fgets(input, 10, stdin); // Lee una cadena del teclado
         opcion = atoi(input);    // Convertir el string a int
-        if (opcion <= 0)         // Si la entrada no es un numero o el string es mayor que 2 (numero mas \0
+        if (opcion <= 0)         // Si la entrada no es un numero
         {
             printf("\nERROR: DEBE INTRODUCIR UN NUMERO VÁLIDO\n");
             printf("Pulse Intro para continuar...\n");
@@ -383,39 +385,39 @@ void colocarBarcosAutomaticamente(struct barcos *info, int numero_barcos, int *i
     int fila, columna, orientacion, tamanio, resultado;
     // Realiza un bucle con el número de barcos que se han introducido.
     // En vez de goto se puede usar una función auxiliar que se repita las mismas veces.
-    for (int k=0; k<numero_barcos; k++)
+    for (int k = 0; k < numero_barcos; k++)
     {
     START_BUCLE:
-    fila = rand() % N;
-    columna = rand() % M;
-    orientacion = rand() % 2; // 0 = horizontal, 1 = vertical
-    tamanio = info[k].tamanio;
-    printf("%d %d %d\n", fila, columna, orientacion);
-    // Comprobar que la posición del barco no esté ocupada y que entre el barco
-    resultado = comprobacionEspacioParaBarco(i_matriz_pos_jugador, fila, columna, orientacion, tamanio);
-    if (resultado == 1 && orientacion==0) // Coloca los barcos horizontalmente
-    {
-        for (int i = 0; i < tamanio; i++)
+        fila = rand() % N;
+        columna = rand() % M;
+        orientacion = rand() % 2; // 0 = horizontal, 1 = vertical
+        tamanio = info[k].tamanio;
+        /*  BORRAR printf("%d %d %d\n", fila, columna, orientacion); */
+        // Comprobar que la posición del barco no esté ocupada y que entre el barco
+        resultado = comprobacionEspacioParaBarco(i_matriz_pos_jugador, fila, columna, orientacion, tamanio);
+        if (resultado == 1 && orientacion == 0) // Coloca los barcos horizontalmente
+        {
+            for (int i = 0; i < tamanio; i++)
             {
                 i_matriz_pos_jugador[fila * M + columna + i] = tamanio;
             }
-    }
-    else if (resultado ==1 && orientacion==1) // Coloca los barcos verticalmente.
-    {
-        for (int i = 0; i < tamanio; i++)
+        }
+        else if (resultado == 1 && orientacion == 1) // Coloca los barcos verticalmente.
+        {
+            for (int i = 0; i < tamanio; i++)
             {
                 i_matriz_pos_jugador[(fila + i) * M + columna] = tamanio;
             }
+        }
+
+        else
+        {
+            k--;
+        }
     }
-    
-    else
-    {
-        k--;
-    } 
-    }  
-    // imprime el tablero para ver si esta correcto.
+    /* BORRAR imprime el tablero para ver si esta correcto.
     imprimirTablero(i_matriz_pos_jugador);
-    getchar();    
+    getchar(); */
 }
 
 // Imprime cualquier tablero que se le pase como parámetro
@@ -470,8 +472,109 @@ int comprobacionEspacioParaBarco(int *i_matriz_espacio, int ifila, int icolumna,
         }
         else
         {
-            return 0; //Si el barco se sale del tablero o no hay otro barco en la posición, devuelve 0.
+            return 0; // Si el barco se sale del tablero o no hay otro barco en la posición, devuelve 0.
         }
     }
 }
-// Depurar código no valido y seguir con juego automatico jugador vs computardor.
+// Juego manual Computador vs Jugador.
+void juegoManual(int *matriz_pos_jugador, int *matriz_pos_computadora, int *matriz_disparos_jugador, int *matriz_disparos_computadora)
+{
+    char input[10];
+    int opcion = -1;
+    int fila, columna;
+    system("clear");
+    printf("*---------------------------- HUNDIR LA FLOTA ------------------------*\n");
+    printf("\n");
+    printf("*------------------  TU TABLERO DE BARCOS --------------------*\n");
+    printf("\n");
+    imprimirTablero(matriz_pos_jugador);
+    printf("\n");
+    printf("*------------------  TABLERO DE DISPAROS ----------------------*\n");
+    printf("\n");
+    imprimirTablero(matriz_disparos_jugador);
+    printf("\n");
+    printf("DISPARA: \n");
+    // Introduce la fila y la columna que quieres disparar y verifica los datos introducidos.
+    do
+    {
+        printf("Fila (0-%d): ", N - 1);
+        fgets(input, 10, stdin);
+        opcion = atoi(input);
+        if (opcion <= 0 || opcion >= N)
+        {
+            if (input[0] == '0')
+            {
+                opcion = 0;
+            }
+            else
+            {
+                printf("\n");
+                printf("Error, introduce un número entre 0 y %d\n", N - 1);
+                printf("\n");
+                opcion = -1;
+            }
+        }
+        fila = opcion;
+    } while (opcion == -1);
+    opcion = -1;
+    do
+    {
+        printf("Columna (0-%d): ", M - 1);
+        fgets(input, 10, stdin);
+        opcion = atoi(input);
+        if (opcion <= 0 || opcion >= M)
+        {
+            if (input[0] == '0')
+            {
+                opcion = 0;
+            }
+            else
+            {
+                printf("\n");
+                printf("Error, introduce un número entre 0 y %d\n", M - 1);
+                printf("\n");
+                opcion = -1;
+            }
+        }
+        columna = opcion;
+    } while (opcion == -1);
+
+    printf("%d\n", fila);
+    printf("%d\n", columna);
+    printf("AHORA COMPROBAMOS EL DISPARO..........");
+    getchar();
+    // Comprueba si el disparo es correcto para el jugador.
+    compruebaDisparo(matriz_pos_computadora, matriz_disparos_jugador, fila, columna);
+    // Turno de la computadora.
+    fila = rand() % N;
+    columna = rand() % M;
+    // Comprueba si el disparo es correcto para la computadora.
+    compruebaDisparo(matriz_pos_jugador, matriz_disparos_computadora, fila, columna);
+    // Comprueba si el jugador ha ganado.
+    
+}
+
+// A esta función se le pasan dos matrices (una de barcos y otra de tiradas) y una posición de disparo.
+// Comprueba si hay un barco en esa posición. Si lo hay, actualizará esa posición en los barcos del contrario
+// (que pasará a estar tocado) y en las tiradas del jugador (indicará que se ha tocado un barco). Si no lo hay
+// indicará en las tiradas del jugador que en esa posición no hay ningún barco.
+void compruebaDisparo(int *matriz_barcos, int *matriz_tiradas, int fila, int columna)
+{
+    int num_pos; // Número en esa posicion (tamaño del barco).
+    if (matriz_barcos[fila * M + columna] == 0)
+    {
+        printf("Agua\n");
+        matriz_tiradas[fila * M + columna] = -1; // en la matriz de tiradas, -1 es agua.
+    }
+    else
+    {
+        printf("Tocado\n");
+        num_pos = matriz_barcos[fila * M + columna]; // Número en esa posicion (tamaño del barco).
+        matriz_tiradas[fila * M + columna] = num_pos; // Indica que se ha tocado un barco en la matriz de tiradas y su tamaño.
+        matriz_barcos[fila * M + columna] = -(num_pos); // Indica que se ha tocado un barco cambiando el signo de su tamaño.
+        imprimirTablero(matriz_barcos);
+        printf("\n");
+        imprimirTablero(matriz_tiradas);
+    }  
+    getchar();
+}
