@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <stdlib.h>
+#include <stdlib.h> // Para usar o rand() por ejemplo.
 #include <string.h>
 
 // Estructura de datos
@@ -11,7 +11,7 @@ struct barcos
 // declaracion de funciones obligatorias
 void colocarBarcosManualmente();
 void colocarBarcosAutomaticamente();
-void inicializarTablero();
+void inicializarTablero(int *tablero, int filas, int columnas);
 void imprimirTablero();
 void comprobacionEspacioParaBarco();
 void compruebaGanador();
@@ -22,15 +22,21 @@ void juegoAutomatico();
 // declaración de funciones auxiliares
 void inicializarBarcos(struct barcos *info, int tam);
 void guardar_archivo(struct barcos *datos);
-void leer_Archivo();
+void leer_Archivo(struct barcos *datos);
 // declaracion de Menus
 void menu_ConfigurarTableroBarcos();
 void menu_jugar_ovuj();
 
 // declaracion de variables globales
-int N = 0;       // nº de filas
-int M = 0;       // nº de columnas
-int nBarcos = 0; // nº de barcos
+int N = 0;               // nº de filas
+int M = 0;               // nº de columnas
+int nBarcos = 0;         // nº de barcos
+struct barcos barco[10]; // establecemos un máximo de 10 barcos
+// declaracion como punteros de las 4 matrices de posiciones y disparos
+int *matriz_pos_jugador = NULL; //matriz de posiciones del jugador
+int *matriz_pos_computadora = NULL; //matriz de posiciones de la computadora
+int *matriz_disparos_jugador = NULL; // marcador de disparos del jugador
+int *matriz_disparos_computadora = NULL; // marcador de disparos de la computadora
 
 int main()
 {
@@ -39,7 +45,7 @@ int main()
     // declaracion de variables
     int opcion = 0;
     char input[10];
-
+    
     // llamar al menu de opciones
     while (opcion != 4)
     {
@@ -131,11 +137,7 @@ get_input: // Etiqueta para poder usar luego goto.
             printf("Los datos de leeran del archivo 'datos.txt'\n");
             printf("Pulse Intro para continuar...\n");
             getchar();
-            leer_Archivo();
-            printf("%d", N);
-            printf("%d", M);
-            printf("%d", nBarcos);
-            getchar();
+            leer_Archivo(barco);
             break;
         case 2:
             printf("\nCONFIGURACION DEL TABLERO\n");
@@ -171,10 +173,10 @@ get_input: // Etiqueta para poder usar luego goto.
                 M = opcion;
             }
         START_BARCOS:
-            printf("Introduzca el número de barcos: \n");
+            printf("Introduzca el número de barcos (máximo 10): \n");
             fgets(input, 10, stdin); // Lee una cadena del teclado
             opcion = atoi(input);    // Convertir el string a int
-            if (opcion <= 0)         // Si la entrada no es un numero o el string es mayor que 2 (numero mas \0)
+            if (opcion <= 0 || opcion>10)         // Si la entrada no es un número o es negativo o mayor que 10.
             {
                 printf("\nERROR: DEBE INTRODUCIR UN NUMERO POSITIVO VÁLIDO\n");
                 printf("Pulse Intro para continuar...\n");
@@ -184,7 +186,6 @@ get_input: // Etiqueta para poder usar luego goto.
             else
             {
                 nBarcos = opcion;
-                struct barcos barco[nBarcos];
                 inicializarBarcos(barco, nBarcos);
                 break;
             }
@@ -223,7 +224,25 @@ START: // Etiqueta para poder usar luego goto.
     }
     else
     {
-        printf("sub_menu opcion 2\n");
+        switch (opcion)
+        {
+            case 1:
+                // Inicializamos los 4 tableros y declaramos la memoria dinamica de los punteros.
+                matriz_pos_jugador = (int *)malloc(sizeof(int *) * N * M);
+                inicializarTablero(matriz_pos_jugador, N, M);
+                matriz_pos_computadora = (int *)malloc(sizeof(int *) * N * M);
+                inicializarTablero(matriz_pos_computadora, N, M);
+                matriz_disparos_jugador = (int *)malloc(sizeof(int *) * N * M);
+                inicializarTablero(matriz_disparos_jugador, N, M);
+                matriz_disparos_computadora = (int *)malloc(sizeof(int *) * N * M);
+                inicializarTablero(matriz_disparos_computadora, N, M);
+                break;
+            case 2:
+                break;
+            default:
+                printf("Salir\n");
+                break;
+        }
     }
     /* Pendiente de completar y dejar funciones para cada opcion */
 }
@@ -231,8 +250,8 @@ START: // Etiqueta para poder usar luego goto.
 // Funciones Auxiliares
 void inicializarBarcos(struct barcos *info, int tam)
 {
-    /* Inicializa todos los barcos, pidiendo su numero total y tamaño y comprobando que sean correctos 
-    y entren en el tablero. El numero de casillas del tablero ha de ser por lo menos el doble 
+    /* Inicializa todos los barcos, pidiendo su numero total y tamaño y comprobando que sean correctos
+    y entren en el tablero. El numero de casillas del tablero ha de ser por lo menos el doble
     que las posiciones ocupadas por el barco.*/
     int i;
     int opcion = 0;
@@ -310,8 +329,9 @@ void guardar_archivo(struct barcos *datos)
 }
 
 // Funcion para leer los datos de un archivo llamado datos.txt
-void leer_Archivo()
+void leer_Archivo(struct barcos *datos)
 {
+    int n_barco;
     FILE *f;
     f = fopen("datos.txt", "r");
     // si el archivo no puede abrirse devuelve Null por lo que
@@ -321,8 +341,29 @@ void leer_Archivo()
         fprintf(stderr, "Ha ocurrido un error al abrir el archivo\n");
         exit(EXIT_FAILURE);
     }
-    fscanf(f, "%d", &N); // Lee el número de filas de la primera linea del archivo datos.txt
-    fscanf(f, "%d", &M); // Lee el número de columnas de la segunda linea del archivo datos.txt
+    fscanf(f, "%d", &N);       // Lee el número de filas de la primera linea del archivo datos.txt
+    fscanf(f, "%d", &M);       // Lee el número de columnas de la segunda linea del archivo datos.txt
     fscanf(f, "%d", &nBarcos); // Lee el número de barcos de la tercera linea del archivo datos.txt
+    for (int i = 0; i < nBarcos; i++)
+    {
+        fscanf(f, "%d %d", &n_barco, &datos[i].tamanio); // Lee el tamaño de cada barco de la cuarta y siguientes lineas del archivo datos.txt
+    }
     fclose(f);
+}
+
+// Función para inicializar el tablero
+void inicializarTablero(int *tablero, int filas, int columnas){
+    /* Inicializa el tablero con todos los valores a 0.
+    El tablero es un array de enteros, por lo que se inicializa con 0.
+    El tablero es de N filas por M columnas.
+    */
+    int i, j;
+    for (i = 0; i < filas; i++)
+    {
+        for (j = 0; j < columnas; j++)
+        {
+            tablero[i * columnas + j] = 0;
+        }
+    }
+
 }
