@@ -21,7 +21,8 @@ void juegoAutomatico();
 
 // declaración de funciones auxiliares
 void inicializarBarcos(struct barcos *info, int tam);
-
+void guardar_archivo(struct barcos *datos);
+void leer_Archivo();
 // declaracion de Menus
 void menu_ConfigurarTableroBarcos();
 void menu_jugar_ovuj();
@@ -73,7 +74,7 @@ int main()
                 break;
 
             case 2:
-                // LLama al submenur jugar ordenador versus jugador.
+                // LLama al submenu jugar ordenador versus jugador.
                 menu_jugar_ovuj();
                 break;
 
@@ -127,6 +128,14 @@ get_input: // Etiqueta para poder usar luego goto.
 
         case 1:
             printf("\nUtilizar configuración almacenada en un archivo\n");
+            printf("Los datos de leeran del archivo 'datos.txt'\n");
+            printf("Pulse Intro para continuar...\n");
+            getchar();
+            leer_Archivo();
+            printf("%d", N);
+            printf("%d", M);
+            printf("%d", nBarcos);
+            getchar();
             break;
         case 2:
             printf("\nCONFIGURACION DEL TABLERO\n");
@@ -219,9 +228,12 @@ START: // Etiqueta para poder usar luego goto.
     /* Pendiente de completar y dejar funciones para cada opcion */
 }
 
-// Funciones Auxialiares
+// Funciones Auxiliares
 void inicializarBarcos(struct barcos *info, int tam)
 {
+    /* Inicializa todos los barcos, pidiendo su numero total y tamaño y comprobando que sean correctos 
+    y entren en el tablero. El numero de casillas del tablero ha de ser por lo menos el doble 
+    que las posiciones ocupadas por el barco.*/
     int i;
     int opcion = 0;
     char input[10];
@@ -250,16 +262,18 @@ void inicializarBarcos(struct barcos *info, int tam)
         total += info[i].tamanio;
     }
     // if (total <= 2*N || total <= 2*M) ANTES
-    if ((total*2) <= (N*M))
+    if ((total * 2) <= (N * M))
     {
         printf("\nBARCOS INICIALIZADOS CORRECTAMENTE\n");
         printf("Pulse Intro para continuar...\n");
         getchar();
+        // Una vez inicializados los barcos, gurdamos las principales variables en un archivo.
+        guardar_archivo(info);
     }
     else
     {
         printf("\nERROR: EL TAMAÑO TOTAL DE LOS BARCOS ES MAYOR QUE EL TAMAÑO DEL TABLERO\n");
-        printf("AVISO!!! el número de casillas del tablero que son %d\n", N*M);
+        printf("AVISO!!! el número de casillas del tablero que son %d\n", N * M);
         printf("ha de ser al menos el doble de las posiciones ocupadas -%d- por los barcos\n", total);
         printf("Pulse Intro para continuar...\n");
         getchar();
@@ -267,4 +281,48 @@ void inicializarBarcos(struct barcos *info, int tam)
         goto START_BARCOS;
     }
 }
-/* En esta funcion hay QUE TERMINAR DE GUARDAR LOS DATOS EN UN FICHERO.*/
+// Función para Guardar los datos en un archivo
+void guardar_archivo(struct barcos *datos)
+{
+    /* En el archivo se guardan los datos de los barcos en formato:
+    primera fila: N numero de filas
+    segunda fila: M numero de columnas
+    tercera fila: nBarcos numero de barcos
+    cuarta y siguientes filas: numero de barco y tamaño del barco
+    el numero de barco empieza en 0 y termina en nBarcos-1
+    */
+
+    FILE *archivo;
+    archivo = fopen("datos.txt", "w");
+    if (archivo == NULL)
+    {
+        printf("Error al abrir el archivo\n");
+        exit(1);
+    }
+    fprintf(archivo, "%d\n", N);       // Guardar el número de Filas
+    fprintf(archivo, "%d\n", M);       // Guardar el número de Columnas
+    fprintf(archivo, "%d\n", nBarcos); // Guardar el número de Barcos
+    for (int i = 0; i < nBarcos; i++)
+    {
+        fprintf(archivo, "%d %d\n", i, datos[i].tamanio); // Guardar el tamaño de cada barco
+    }
+    fclose(archivo);
+}
+
+// Funcion para leer los datos de un archivo llamado datos.txt
+void leer_Archivo()
+{
+    FILE *f;
+    f = fopen("datos.txt", "r");
+    // si el archivo no puede abrirse devuelve Null por lo que
+    // mostramos el mensaje de error y salimos del archivo.
+    if (f == NULL)
+    {
+        fprintf(stderr, "Ha ocurrido un error al abrir el archivo\n");
+        exit(EXIT_FAILURE);
+    }
+    fscanf(f, "%d", &N); // Lee el número de filas de la primera linea del archivo datos.txt
+    fscanf(f, "%d", &M); // Lee el número de columnas de la segunda linea del archivo datos.txt
+    fscanf(f, "%d", &nBarcos); // Lee el número de barcos de la tercera linea del archivo datos.txt
+    fclose(f);
+}
