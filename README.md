@@ -1,4 +1,4 @@
-# Hundir_la_Flota
+# Hundir_la_Flota (Compilado para Linux).
 
 **1. Desarrollo del juego**
 
